@@ -1,0 +1,264 @@
+
+<div class="min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-xl shadow-md">
+          <i class="fas fa-stamp"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-xl text-slate-800 leading-tight">{{ t('title') }}</h1>
+          <p class="text-xs text-slate-500 hidden sm:block">{{ t('subtitle') }}</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-4">
+        <select 
+          (change)="setLang($any($event.target).value)" 
+          class="text-sm border-slate-200 rounded-md py-1.5 pl-2 pr-8 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50"
+        >
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="zh">中文</option>
+        </select>
+        
+        <button 
+          (click)="triggerDownload()"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2"
+        >
+          <i class="fas fa-download"></i>
+          <span class="hidden sm:inline">{{ t('download') }}</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow max-w-7xl mx-auto w-full px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- Controls Sidebar -->
+    <div class="lg:col-span-4 space-y-6">
+      
+      <!-- Shape & Color -->
+      <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+          <i class="fas fa-shapes text-indigo-500"></i> {{ t('shape') }} & {{ t('colors') }}
+        </h2>
+        
+        <div class="space-y-4">
+          <!-- Shape Selection -->
+          <div class="grid grid-cols-2 gap-3">
+            <button 
+              (click)="updateConfig('shape', 'circle')"
+              [class]="stampConfig().shape === 'circle' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 hover:border-indigo-300 text-slate-600'"
+              class="border rounded-lg py-2 px-3 text-sm font-medium transition-all flex items-center justify-center gap-2"
+            >
+              <i class="far fa-circle"></i> {{ t('circle') }}
+            </button>
+            <button 
+              (click)="updateConfig('shape', 'rectangle')"
+              [class]="stampConfig().shape === 'rectangle' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 hover:border-indigo-300 text-slate-600'"
+              class="border rounded-lg py-2 px-3 text-sm font-medium transition-all flex items-center justify-center gap-2"
+            >
+              <i class="far fa-square"></i> {{ t('rectangle') }}
+            </button>
+          </div>
+
+          <!-- Color Selection -->
+          <div class="flex gap-3 justify-between">
+            @for (c of colors; track c.name) {
+              <button 
+                (click)="updateConfig('color', c.value)"
+                [class.ring-2]="stampConfig().color === c.value"
+                [class.ring-offset-2]="stampConfig().color === c.value"
+                class="w-8 h-8 rounded-full shadow-sm transition-all focus:outline-none ring-offset-white ring-indigo-500 {{ c.class }}"
+                [title]="t(c.name)"
+              ></button>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- Text Inputs -->
+      <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+          <i class="fas fa-font text-indigo-500"></i> {{ t('textSettings') }}
+        </h2>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('topText') }}</label>
+            <input 
+              type="text" 
+              [ngModel]="stampConfig().topText"
+              (ngModelChange)="updateConfig('topText', $event)"
+              class="w-full rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('bottomText') }}</label>
+            <input 
+              type="text" 
+              [ngModel]="stampConfig().bottomText"
+              (ngModelChange)="updateConfig('bottomText', $event)"
+              class="w-full rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+            >
+          </div>
+          
+          <!-- Only show Center Text if no image -->
+          @if (!stampConfig().centerImage) {
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">{{ t('centerText') }}</label>
+              <input 
+                type="text" 
+                [ngModel]="stampConfig().centerText"
+                (ngModelChange)="updateConfig('centerText', $event)"
+                class="w-full rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+              >
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Center Image / AI -->
+      <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+          <i class="fas fa-image text-indigo-500"></i> {{ t('centerImage') }}
+        </h2>
+
+        <div class="space-y-4">
+          <!-- Clear Image Button -->
+          @if (stampConfig().centerImage) {
+            <button 
+              (click)="updateConfig('centerImage', null)" 
+              class="w-full text-xs text-red-600 hover:text-red-700 border border-red-200 hover:bg-red-50 rounded py-1 mb-2 transition-colors"
+            >
+              Remove Image
+            </button>
+          }
+
+          <!-- Tabs for Upload vs AI -->
+          <div class="border-b border-slate-200 mb-3">
+             <div class="flex gap-4">
+               <span class="text-xs font-medium text-indigo-600 border-b-2 border-indigo-600 pb-1 cursor-default">AI Generate</span>
+             </div>
+          </div>
+
+          <div class="space-y-2">
+             <div class="flex gap-2">
+               <input 
+                 type="text"
+                 [(ngModel)]="iconPrompt"
+                 [placeholder]="t('promptPlaceholder')"
+                 class="flex-1 rounded-md border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                 (keydown.enter)="generateAiIcon()"
+               >
+               <button 
+                 (click)="generateAiIcon()"
+                 [disabled]="isGenerating() || !iconPrompt()"
+                 class="bg-slate-900 text-white px-3 py-2 rounded-md text-sm hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+               >
+                 <i class="fas fa-magic" [class.fa-spin]="isGenerating()"></i>
+               </button>
+             </div>
+             <p class="text-[10px] text-slate-400">Powered by Google Gemini</p>
+          </div>
+
+          <div class="relative">
+             <div class="absolute inset-0 flex items-center" aria-hidden="true">
+               <div class="w-full border-t border-slate-200"></div>
+             </div>
+             <div class="relative flex justify-center">
+               <span class="bg-white px-2 text-xs text-slate-500">OR</span>
+             </div>
+           </div>
+
+           <label class="flex flex-col items-center justify-center w-full h-16 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+              <div class="flex flex-col items-center justify-center pt-2 pb-2">
+                  <p class="text-xs text-slate-500"><span class="font-semibold">{{ t('uploadImage') }}</span></p>
+              </div>
+              <input type="file" class="hidden" accept="image/*" (change)="handleImageUpload($event)" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Advanced Settings -->
+      <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+          <i class="fas fa-sliders-h text-indigo-500"></i> {{ t('advanced') }}
+        </h2>
+        
+        <div class="space-y-4">
+           <!-- Border Width -->
+           <div>
+             <div class="flex justify-between mb-1">
+               <label class="text-xs font-medium text-slate-500">{{ t('borderWidth') }}</label>
+               <span class="text-xs text-slate-700">{{ stampConfig().borderWidth }}px</span>
+             </div>
+             <input 
+               type="range" 
+               min="1" 
+               max="15" 
+               [ngModel]="stampConfig().borderWidth"
+               (ngModelChange)="updateConfig('borderWidth', $event)"
+               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+             >
+           </div>
+
+           <!-- Font Size -->
+           <div>
+            <div class="flex justify-between mb-1">
+              <label class="text-xs font-medium text-slate-500">{{ t('fontSize') }}</label>
+              <span class="text-xs text-slate-700">{{ stampConfig().fontSize }}px</span>
+            </div>
+            <input 
+              type="range" 
+              min="12" 
+              max="48" 
+              [ngModel]="stampConfig().fontSize"
+              (ngModelChange)="updateConfig('fontSize', $event)"
+              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+            >
+          </div>
+
+           <!-- Grunge Toggle -->
+           <div class="flex items-center justify-between">
+             <label class="text-sm text-slate-700">{{ t('grunge') }}</label>
+             <button 
+               (click)="updateConfig('isGrunge', !stampConfig().isGrunge)"
+               [class]="stampConfig().isGrunge ? 'bg-indigo-600' : 'bg-slate-200'"
+               class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
+             >
+               <span 
+                 [class]="stampConfig().isGrunge ? 'translate-x-6' : 'translate-x-1'"
+                 class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+               ></span>
+             </button>
+           </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Preview Area -->
+    <div class="lg:col-span-8">
+      <div class="sticky top-24">
+        <app-stamp-preview [config]="stampConfig()"></app-stamp-preview>
+        
+        <!-- Instructions / SEO Content -->
+        <div class="mt-8 bg-white p-6 rounded-xl shadow-sm border border-slate-200 prose prose-slate max-w-none">
+          <h3>How to use StampGen AI</h3>
+          <ul>
+            <li><strong>Select Shape:</strong> Choose between a classic circle stamp or a business-style rectangle.</li>
+            <li><strong>Customize Text:</strong> Add your company name, dates, or slogans on the top and bottom curves.</li>
+            <li><strong>Add Visuals:</strong> Use the AI generator to create a unique logo for the center, or upload your own.</li>
+            <li><strong>Style It:</strong> Adjust ink colors, border thickness, and enable the "Grunge" effect for a realistic vintage look.</li>
+            <li><strong>Export:</strong> Download a high-quality PNG with transparency, ready for documents or digital art.</li>
+          </ul>
+          <p class="text-sm text-slate-500 mt-4">{{ t('footer') }}</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
